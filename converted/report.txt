@@ -1,0 +1,6 @@
+Image Conversion Report 
+Generated on: 周六 2026/04/04 21:03:12.13 
+========================== 
+Successfully converted: 297 files 
+Failed to convert: 0 files 
+Output directory: converted 

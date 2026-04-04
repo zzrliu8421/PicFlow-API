@@ -1,0 +1,10 @@
+{
+  "name": "picflow-api",
+  "entry": "./api_v2.php",
+  "installCommand": "",
+  "buildCommand": "",
+  "assets": {
+    "directory": ".",
+    "notFoundStrategy": "404Page"
+  }
+}
