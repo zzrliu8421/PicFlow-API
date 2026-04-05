@@ -2,29 +2,26 @@
   "version": 2,
   "builds": [
     {
-      "src": "api_v2.php",
-      "use": "@vercel/php"
-    },
-    {
-      "src": "index.php",
-      "use": "@vercel/php"
+      "src": "package.json",
+      "use": "@vercel/next"
     }
   ],
   "routes": [
     {
-      "src": "/api_v2",
-      "dest": "/api_v2.php"
+      "src": "/api/v2",
+      "dest": "/api/v2.ts",
+      "methods": ["GET"]
     },
     {
-      "src": "/api_v2.php",
-      "dest": "/api_v2.php"
-    },
-    {
-      "src": "/",
-      "dest": "/index.php"
+      "src": "/(.*)",
+      "dest": "/"
     }
   ],
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "output": "standalone",
   "env": {
-    "PHP_VERSION": "8.0"
+    "NODE_ENV": "production"
   }
 }

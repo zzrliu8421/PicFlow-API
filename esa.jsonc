@@ -1,10 +1,10 @@
 {
   "name": "picflow-api",
-  "entry": "./api_v2.php",
-  "installCommand": "",
-  "buildCommand": "",
+  "entry": "./package.json",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
   "assets": {
-    "directory": ".",
+    "directory": ".next",
     "notFoundStrategy": "404Page"
   }
 }
