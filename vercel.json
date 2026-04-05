@@ -10,13 +10,25 @@
     },
     {
       "src": "/converted/(.*)",
-      "dest": "/converted/$1"
+      "dest": "/converted/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
     },
     {
       "src": "/(.*)",
       "dest": "/index.js"
     }
   ],
+  
+  "images": {
+    "sizes": [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    "minimumCacheTTL": 60,
+    "formats": ["image/webp", "image/avif"],
+    "dangerouslyAllowSVG": false,
+    "contentSecurityPolicy": "default-src 'self'"
+  },
+  
   "outputDirectory": ".",
   "installCommand": "npm install",
   "buildCommand": "npm run build"
