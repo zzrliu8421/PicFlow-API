@@ -1,6 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+const port = process.env.PORT || 3000;
 
 // 配置常量
 const BASE_DIR = process.cwd();
@@ -9,11 +12,22 @@ const DEFAULT_IMAGE_COUNT = 1;
 const MAX_IMAGES_PER_REQUEST = 50;
 const API_VERSION = '3.0';
 
+// CORS中间件
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
+// 静态文件服务
+app.use('/converted', express.static(path.join(BASE_DIR, 'converted')));
+
 // 设备检测函数
-function isMobile(userAgent: string): boolean {
+function isMobile(userAgent) {
   const useragent_commentsblock = userAgent.match(/\(.*?\)/)?.[0] || '';
   
-  function CheckSubstrs(substrs: string[], text: string): boolean {
+  function CheckSubstrs(substrs, text) {
     for (const substr of substrs) {
       if (text.includes(substr)) {
         return true;
@@ -41,7 +55,7 @@ function isMobile(userAgent: string): boolean {
 }
 
 // 智能格式检测函数
-function detectOptimalFormat(userAgent: string): string {
+function detectOptimalFormat(userAgent) {
   // 检测是否支持AVIF
   if (userAgent.includes('Chrome/')) {
     const match = userAgent.match(/Chrome\/(\d+)/);
@@ -72,7 +86,7 @@ function detectOptimalFormat(userAgent: string): string {
 }
 
 // 获取转换后的图片URL
-function getConvertedImageUrl(originalImage: any, targetFormat: string, siteUrl: string): any {
+function getConvertedImageUrl(originalImage, targetFormat, siteUrl) {
   const filename = path.parse(originalImage.filename).name;
   const deviceType = originalImage.type;
   
@@ -101,25 +115,8 @@ function getConvertedImageUrl(originalImage: any, targetFormat: string, siteUrl:
   };
 }
 
-// 图片类型定义
-interface Image {
-  filename: string;
-  path?: string;
-  url: string;
-  extension: string;
-  type: string;
-  size: number;
-  source?: string;
-  format?: string;
-  external?: boolean;
-  converted?: boolean;
-  optimal_format?: string;
-  requested_format?: string;
-  external_mode?: boolean;
-}
-
 // 获取图片
-function getImages(type: string, count: number, external: boolean, imageFormat: string, siteUrl: string): any {
+function getImages(type, count, external, imageFormat, siteUrl) {
   // 外链模式
   if (external) {
     return getExternalImages(type, count);
@@ -127,7 +124,7 @@ function getImages(type: string, count: number, external: boolean, imageFormat: 
   
   // 获取所有图片文件
   const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
-  const images: Image[] = [];
+  const images = [];
   
   // 只扫描 converted 目录
   const convertedBaseDir = path.join(BASE_DIR, 'converted', type);
@@ -207,7 +204,7 @@ function getImages(type: string, count: number, external: boolean, imageFormat: 
 }
 
 // 外链模式图片获取函数
-function getExternalImages(type: string, count: number): any {
+function getExternalImages(type, count) {
   const linkFile = path.join(BASE_DIR, `${type}.txt`);
   
   if (!fs.existsSync(linkFile)) {
@@ -225,7 +222,7 @@ function getExternalImages(type: string, count: number): any {
     .map(line => line.trim())
     .filter(line => line.length > 0);
   
-  const images: Image[] = [];
+  const images = [];
   
   links.forEach((link, index) => {
     const fileName = `external_${index + 1}`;
@@ -260,25 +257,21 @@ function getExternalImages(type: string, count: number): any {
   };
 }
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+// API路由
+app.get('/api/v2', (req, res) => {
   try {
-    // 设置CORS头
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
     // 获取参数
-    const count = Math.max(1, Math.min(MAX_IMAGES_PER_REQUEST, parseInt(req.query.count as string) || DEFAULT_IMAGE_COUNT));
-    const format = (req.query.format as string) || 'json';
-    let type = (req.query.type as string) || '';
-    const imageFormat = (req.query.img_format as string) || 'auto';
-    const returnType = (req.query.return as string) || 'json';
-    const external = (req.query.external as string) === 'true' || (req.query.external as string) === '1';
-    const userAgent = req.headers['user-agent'] as string || '';
+    const count = Math.max(1, Math.min(MAX_IMAGES_PER_REQUEST, parseInt(req.query.count) || DEFAULT_IMAGE_COUNT));
+    const format = req.query.format || 'json';
+    let type = req.query.type || '';
+    const imageFormat = req.query.img_format || 'auto';
+    const returnType = req.query.return || 'json';
+    const external = req.query.external === 'true' || req.query.external === '1';
+    const userAgent = req.headers['user-agent'] || '';
     
     // 构建siteUrl
-    const protocol = req.headers['x-forwarded-proto'] as string || 'http';
-    const host = req.headers['host'] as string || 'localhost:3000';
+    const protocol = req.headers['x-forwarded-proto'] || (req.connection.encrypted ? 'https' : 'http');
+    const host = req.headers['host'] || 'localhost:3000';
     const siteUrl = `${protocol}://${host}`;
     
     // 如果没有指定type参数，则自动检测设备类型
@@ -300,7 +293,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
     
-    let selectedImages: Image[] = result.images;
+    let selectedImages = result.images;
     const totalImages = result.total_available;
     
     // 如果只要一张图片且返回类型是重定向，直接重定向
@@ -371,7 +364,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       res.status(200).send(urls);
     } else {
       // JSON格式 (默认)
-      const response: any = {
+      const response = {
         success: true,
         count: selectedImages.length,
         type: type,
@@ -401,4 +394,165 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       images: []
     });
   }
-}
+});
+
+// 首页
+app.get('/', (req, res) => {
+  const serverInfo = {
+    version: '3.0',
+    status: '运行中',
+    api: '/api/v2',
+    features: [
+      '设备自动检测',
+      '智能图片格式优化',
+      '多格式支持 (JPEG, WebP, AVIF)',
+      '外链模式',
+      'JSON/Text 格式输出',
+      '重定向支持'
+    ]
+  };
+
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>PicFlow API</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          max-width: 800px;
+          margin: 50px auto;
+          padding: 20px;
+          background: #f5f5f5;
+        }
+        .container {
+          background: white;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+          color: #333;
+          text-align: center;
+          margin-bottom: 30px;
+        }
+        .status {
+          text-align: center;
+          color: #28a745;
+          font-size: 18px;
+          margin-bottom: 20px;
+        }
+        .info-section,
+        .features-section,
+        .api-examples {
+          margin: 30px 0;
+        }
+        h2 {
+          color: #555;
+          margin-bottom: 15px;
+        }
+        .info-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 10px 0;
+          border-bottom: 1px solid #eee;
+        }
+        .info-item:last-child {
+          border-bottom: none;
+        }
+        .label {
+          font-weight: bold;
+          color: #555;
+        }
+        .value {
+          color: #777;
+        }
+        .features-list {
+          list-style: none;
+          padding: 0;
+        }
+        .features-list li {
+          padding: 8px 0;
+          border-bottom: 1px solid #eee;
+        }
+        .features-list li:last-child {
+          border-bottom: none;
+        }
+        .api-examples {
+          background: #f8f9fa;
+          padding: 20px;
+          border-radius: 5px;
+        }
+        .example {
+          margin: 15px 0;
+        }
+        code {
+          background: #e9ecef;
+          padding: 8px 12px;
+          border-radius: 4px;
+          display: block;
+          margin-bottom: 5px;
+          font-family: 'Courier New', monospace;
+        }
+        p {
+          margin: 5px 0 0 0;
+          color: #666;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>PicFlow API</h1>
+        <div class="status">✅ ${serverInfo.status}</div>
+        
+        <div class="info-section">
+          <h2>API 信息</h2>
+          <div class="info-item">
+            <span class="label">版本</span>
+            <span class="value">${serverInfo.version}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">API 端点</span>
+            <span class="value">${serverInfo.api}</span>
+          </div>
+        </div>
+
+        <div class="features-section">
+          <h2>功能特性</h2>
+          <ul class="features-list">
+            ${serverInfo.features.map(feature => `<li>${feature}</li>`).join('')}
+          </ul>
+        </div>
+
+        <div class="api-examples">
+          <h2>使用示例</h2>
+          <div class="example">
+            <code>GET ${serverInfo.api}?count=5</code>
+            <p>获取5张随机图片</p>
+          </div>
+          <div class="example">
+            <code>GET ${serverInfo.api}?type=pe&format=webp</code>
+            <p>获取移动端WebP格式图片</p>
+          </div>
+          <div class="example">
+            <code>GET ${serverInfo.api}?external=true</code>
+            <p>使用外链模式</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
+// 404处理
+app.use((req, res) => {
+  res.status(404).send('Not Found');
+});
+
+// 启动服务器
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});

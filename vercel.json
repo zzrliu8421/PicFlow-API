@@ -2,25 +2,28 @@
   "version": 2,
   "builds": [
     {
-      "src": "package.json",
-      "use": "@vercel/next"
+      "src": "index.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/v2",
-      "dest": "/api/v2.ts",
+      "dest": "/index.js",
       "methods": ["GET"]
     },
     {
+      "src": "/converted/(.*)",
+      "dest": "/converted/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/"
+      "dest": "/index.js"
     }
   ],
-  "outputDirectory": ".next",
+  "outputDirectory": ".",
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "output": "standalone",
   "env": {
     "NODE_ENV": "production"
   }
