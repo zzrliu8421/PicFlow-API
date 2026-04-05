@@ -19,6 +19,7 @@ PicFlow API v3.0 是一个智能图片服务API，支持多种图片格式转换
 - ⚡ **高性能**: 只处理转换后的优化图片，提升响应速度
 - 📊 **详细响应信息**: 提供完整的图片元数据和API状态
 - 🌍 **多平台部署**: 支持传统服务器和 Vercel 部署
+- 🚀 **直接图片返回**: 通过 /image 路径直接返回图片，无需重定向
 
 ## 请求地址
 
@@ -30,6 +31,11 @@ GET /api_v2.php
 ### JavaScript 版本 (Vercel)
 ```
 GET /api/v2
+```
+
+### 直接图片返回 (JavaScript 版本)
+```
+GET /image
 ```
 
 ## 请求参数
@@ -114,6 +120,41 @@ GET /api/v2?external=true&type=pe&count=5
 
 # 外链模式直接重定向
 GET /api_v2.php?external=1&return=redirect
+```
+
+### 3. 直接图片返回模式
+
+直接图片返回模式通过 `/image` 路径直接返回图片文件，无需重定向，同时自动检测设备类型和最佳图片格式。
+
+#### 功能特点
+- 🚀 **直接返回**: 直接返回图片文件，不是重定向
+- 📱 **自动设备检测**: 根据用户代理自动选择移动端/桌面端图片
+- 🎯 **智能格式选择**: 根据浏览器支持自动选择最佳图片格式 (AVIF/WebP/JPEG)
+- ⚡ **高性能**: 直接读取并返回图片文件，减少网络请求
+
+#### 请求示例
+
+```bash
+# 直接获取图片 (自动检测设备和格式)
+GET /image
+
+# 在HTML中直接使用
+<img src="/image" alt="Random Image">
+
+# 作为背景图片
+<div style="background-image: url('/image')"></div>
+```
+
+#### 响应格式
+
+直接返回图片文件，Content-Type 根据检测到的图片格式自动设置：
+
+```
+HTTP/1.1 200 OK
+Content-Type: image/webp  # 或 image/avif, image/jpeg
+Content-Length: 12345
+
+[图片二进制数据]
 ```
 
 ## 响应格式
@@ -340,8 +381,14 @@ if ($data['success']) {
 <!-- 直接重定向到图片 (JavaScript 版本) -->
 <img src="/api/v2?return=redirect&img_format=webp" alt="Random Image">
 
+<!-- 直接返回图片 (JavaScript 版本) -->
+<img src="/image" alt="Random Image">
+
 <!-- 背景图片 -->
 <div style="background-image: url('/api_v2?return=redirect&type=pc')"></div>
+
+<!-- 使用直接返回图片作为背景 -->
+<div style="background-image: url('/image')"></div>
 ```
 
 ## 版本更新日志
@@ -352,6 +399,7 @@ if ($data['success']) {
 - ✨ 优化智能格式检测逻辑
 - ✨ 改进错误处理机制
 - ✨ 新增 JavaScript 实现，支持 Vercel 部署
+- ✨ 新增 /image 路由，直接返回图片文件，无需重定向
 - 🔧 优化性能和响应速度
 - 🔧 完善文档和示例
 

@@ -547,6 +547,70 @@ app.get('/', (req, res) => {
   `);
 });
 
+// 直接返回图片的路由
+app.get('/image', (req, res) => {
+  try {
+    const userAgent = req.headers['user-agent'] || '';
+    
+    // 构建siteUrl
+    const protocol = req.headers['x-forwarded-proto'] || (req.connection.encrypted ? 'https' : 'http');
+    const host = req.headers['host'] || 'localhost:3000';
+    const siteUrl = `${protocol}://${host}`;
+    
+    // 自动检测设备类型
+    const type = isMobile(userAgent) ? 'pe' : 'pc';
+    
+    // 智能检测最佳格式
+    const optimalFormat = detectOptimalFormat(userAgent);
+    
+    // 获取图片列表
+    const result = getImages(type, 1, false, 'auto', siteUrl);
+    
+    if (!result.success || result.images.length === 0) {
+      res.status(404).send('No image found');
+      return;
+    }
+    
+    // 选择第一张图片
+    const image = result.images[0];
+    
+    // 获取最佳格式的图片
+    const convertedImage = getConvertedImageUrl(image, optimalFormat, siteUrl);
+    
+    // 直接读取并返回图片文件
+    if (fs.existsSync(convertedImage.path)) {
+      const contentType = {
+        'jpeg': 'image/jpeg',
+        'webp': 'image/webp',
+        'avif': 'image/avif'
+      }[convertedImage.format] || 'image/jpeg';
+      
+      res.setHeader('Content-Type', contentType);
+      res.sendFile(convertedImage.path);
+    } else {
+      // 如果转换后的文件不存在，返回原始文件
+      if (image.path && fs.existsSync(image.path)) {
+        const contentType = {
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'gif': 'image/gif',
+          'webp': 'image/webp',
+          'avif': 'image/avif'
+        }[image.extension] || 'image/jpeg';
+        
+        res.setHeader('Content-Type', contentType);
+        res.sendFile(image.path);
+      } else {
+        res.status(404).send('Image not found');
+      }
+    }
+  } catch (error) {
+    console.error('Image Error:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
 // 404处理
 app.use((req, res) => {
   res.status(404).send('Not Found');

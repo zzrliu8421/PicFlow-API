@@ -9,6 +9,11 @@
       "methods": ["GET"]
     },
     {
+      "src": "/image",
+      "dest": "/index.js",
+      "methods": ["GET"]
+    },
+    {
       "src": "/converted/(.*)",
       "dest": "/converted/$1",
       "headers": {
