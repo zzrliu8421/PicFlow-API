@@ -1,0 +1,5 @@
+{
+  "buildCommand": "echo \"Build completed successfully\"",
+  "outputDirectory": ".",
+  "nodeVersion": "18.20.4"
+}
