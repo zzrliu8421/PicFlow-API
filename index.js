@@ -56,22 +56,6 @@ function isMobile(userAgent) {
 
 // 智能格式检测函数
 function detectOptimalFormat(userAgent) {
-  // 检测是否支持AVIF
-  if (userAgent.includes('Chrome/')) {
-    const match = userAgent.match(/Chrome\/(\d+)/);
-    if (match && parseInt(match[1]) >= 85) {
-      return 'avif';
-    }
-  }
-  
-  // 检测Firefox对AVIF的支持
-  if (userAgent.includes('Firefox/')) {
-    const match = userAgent.match(/Firefox\/(\d+)/);
-    if (match && parseInt(match[1]) >= 93) {
-      return 'avif';
-    }
-  }
-  
   // 检测是否支持WebP
   if (userAgent.includes('Chrome') || 
       userAgent.includes('Opera') || 
@@ -123,14 +107,14 @@ function getImages(type, count, external, imageFormat, siteUrl) {
   }
   
   // 获取所有图片文件
-  const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
   const images = [];
   
   // 只扫描 converted 目录
   const convertedBaseDir = path.join(BASE_DIR, 'converted', type);
   if (fs.existsSync(convertedBaseDir)) {
     // 如果没有指定格式或者是auto，扫描所有格式
-    const formats = ['jpeg', 'webp', 'avif'];
+    const formats = ['jpeg', 'webp'];
     
     for (const format of formats) {
       const formatDir = path.join(convertedBaseDir, format);
@@ -171,7 +155,7 @@ function getImages(type, count, external, imageFormat, siteUrl) {
   }
   
   // 根据 imageFormat 参数过滤图片
-  if (imageFormat !== 'auto' && ['jpeg', 'webp', 'avif'].includes(imageFormat)) {
+  if (imageFormat !== 'auto' && ['jpeg', 'webp'].includes(imageFormat)) {
     // 过滤出指定格式的图片
     const filteredImages = images.filter(image => 
       image.format === imageFormat
@@ -306,7 +290,7 @@ app.get('/api/v2', (req, res) => {
         const convertedImage = getConvertedImageUrl(image, optimalFormat, siteUrl);
         res.redirect(302, convertedImage.url);
         return;
-      } else if (imageFormat !== 'original' && ['jpeg', 'webp', 'avif'].includes(imageFormat)) {
+      } else if (imageFormat !== 'original' && ['jpeg', 'webp'].includes(imageFormat)) {
         const convertedImage = getConvertedImageUrl(image, imageFormat, siteUrl);
         res.redirect(302, convertedImage.url);
         return;
@@ -333,7 +317,7 @@ app.get('/api/v2', (req, res) => {
             size: convertedImage.size > 0 ? convertedImage.size : image.size
           };
         });
-      } else if (imageFormat !== 'original' && ['jpeg', 'webp', 'avif'].includes(imageFormat)) {
+      } else if (imageFormat !== 'original' && ['jpeg', 'webp'].includes(imageFormat)) {
         // 指定格式处理
         selectedImages = selectedImages.map(image => {
           const convertedImage = getConvertedImageUrl(image, imageFormat, siteUrl);
@@ -403,13 +387,13 @@ app.get('/', (req, res) => {
     status: '运行中',
     api: '/api/v2',
     features: [
-      '设备自动检测',
-      '智能图片格式优化',
-      '多格式支持 (JPEG, WebP, AVIF)',
-      '外链模式',
-      'JSON/Text 格式输出',
-      '重定向支持'
-    ]
+        '设备自动检测',
+        '智能图片格式优化',
+        '多格式支持 (JPEG, WebP)',
+        '外链模式',
+        'JSON/Text 格式输出',
+        '重定向支持'
+      ]
   };
 
   res.send(`
@@ -581,8 +565,7 @@ app.get('/image', (req, res) => {
     if (fs.existsSync(convertedImage.path)) {
       const contentType = {
         'jpeg': 'image/jpeg',
-        'webp': 'image/webp',
-        'avif': 'image/avif'
+        'webp': 'image/webp'
       }[convertedImage.format] || 'image/jpeg';
       
       res.setHeader('Content-Type', contentType);
@@ -595,8 +578,7 @@ app.get('/image', (req, res) => {
           'jpeg': 'image/jpeg',
           'png': 'image/png',
           'gif': 'image/gif',
-          'webp': 'image/webp',
-          'avif': 'image/avif'
+          'webp': 'image/webp'
         }[image.extension] || 'image/jpeg';
         
         res.setHeader('Content-Type', contentType);
