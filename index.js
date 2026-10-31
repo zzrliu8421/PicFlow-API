@@ -380,155 +380,19 @@ app.get('/api/v2', (req, res) => {
   }
 });
 
+// 加载首页 UI（独立 HTML 文件，避免巨型模板字符串）
+const HOME_HTML_PATH = path.join(__dirname, 'home.html');
+let HOME_HTML = '';
+try {
+  HOME_HTML = fs.readFileSync(HOME_HTML_PATH, 'utf8');
+} catch (err) {
+  console.error('无法读取 home.html:', err.message);
+  HOME_HTML = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>PicFlow API</title></head><body style="font-family:sans-serif;background:#0B0A08;color:#EFEAE0;display:flex;align-items:center;justify-content:center;min-height:100vh"><div style="text-align:center"><h1>PicFlow API v3.0</h1><p>服务运行中 · API: /api/v2 · /image</p></div></body></html>';
+}
+
 // 首页
 app.get('/', (req, res) => {
-  const serverInfo = {
-    version: '3.0',
-    status: '运行中',
-    api: '/api/v2',
-    features: [
-        '设备自动检测',
-        '智能图片格式优化',
-        '多格式支持 (JPEG, WebP)',
-        '外链模式',
-        'JSON/Text 格式输出',
-        '重定向支持'
-      ]
-  };
-
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="zh-CN">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>PicFlow API</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          max-width: 800px;
-          margin: 50px auto;
-          padding: 20px;
-          background: #f5f5f5;
-        }
-        .container {
-          background: white;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-          color: #333;
-          text-align: center;
-          margin-bottom: 30px;
-        }
-        .status {
-          text-align: center;
-          color: #28a745;
-          font-size: 18px;
-          margin-bottom: 20px;
-        }
-        .info-section,
-        .features-section,
-        .api-examples {
-          margin: 30px 0;
-        }
-        h2 {
-          color: #555;
-          margin-bottom: 15px;
-        }
-        .info-item {
-          display: flex;
-          justify-content: space-between;
-          padding: 10px 0;
-          border-bottom: 1px solid #eee;
-        }
-        .info-item:last-child {
-          border-bottom: none;
-        }
-        .label {
-          font-weight: bold;
-          color: #555;
-        }
-        .value {
-          color: #777;
-        }
-        .features-list {
-          list-style: none;
-          padding: 0;
-        }
-        .features-list li {
-          padding: 8px 0;
-          border-bottom: 1px solid #eee;
-        }
-        .features-list li:last-child {
-          border-bottom: none;
-        }
-        .api-examples {
-          background: #f8f9fa;
-          padding: 20px;
-          border-radius: 5px;
-        }
-        .example {
-          margin: 15px 0;
-        }
-        code {
-          background: #e9ecef;
-          padding: 8px 12px;
-          border-radius: 4px;
-          display: block;
-          margin-bottom: 5px;
-          font-family: 'Courier New', monospace;
-        }
-        p {
-          margin: 5px 0 0 0;
-          color: #666;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>PicFlow API</h1>
-        <div class="status">✅ ${serverInfo.status}</div>
-        
-        <div class="info-section">
-          <h2>API 信息</h2>
-          <div class="info-item">
-            <span class="label">版本</span>
-            <span class="value">${serverInfo.version}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">API 端点</span>
-            <span class="value">${serverInfo.api}</span>
-          </div>
-        </div>
-
-        <div class="features-section">
-          <h2>功能特性</h2>
-          <ul class="features-list">
-            ${serverInfo.features.map(feature => `<li>${feature}</li>`).join('')}
-          </ul>
-        </div>
-
-        <div class="api-examples">
-          <h2>使用示例</h2>
-          <div class="example">
-            <code>GET ${serverInfo.api}?count=5</code>
-            <p>获取5张随机图片</p>
-          </div>
-          <div class="example">
-            <code>GET ${serverInfo.api}?type=pe&format=webp</code>
-            <p>获取移动端WebP格式图片</p>
-          </div>
-          <div class="example">
-            <code>GET ${serverInfo.api}?external=true</code>
-            <p>使用外链模式</p>
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `);
+  res.send(HOME_HTML);
 });
 
 // 直接返回图片的路由
